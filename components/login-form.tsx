@@ -33,11 +33,25 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      const { data: loginData, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+      if (loginError) throw loginError;
+
+      //Check if the user has entered his data before
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", loginData.user?.id);
+
+      if (userError) {
+        console.log(userError);
+        throw userError;
+      }
+
+      console.log({ userData });
       // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push("/protected");
     } catch (error: unknown) {
