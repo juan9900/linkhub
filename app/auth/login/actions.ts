@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { getErrorMessage } from "@/utils/errorMessages";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -19,8 +20,12 @@ export async function login(formData: FormData) {
 
   if (error) {
     //TODO: handle different kinds of errors: invalid credentials, permisison, other...
+
     console.log(error);
-    redirect("/error");
+    return {
+      error: getErrorMessage(error.code),
+    };
+    // redirect("/error");
   }
 
   revalidatePath("/", "layout");

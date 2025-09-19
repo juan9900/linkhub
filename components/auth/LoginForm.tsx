@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { login } from "@/app/auth/login/actions";
 import { getFormData } from "@/utils/getFormData";
+import { useState } from "react";
 
 type Inputs = {
   email: string;
@@ -30,7 +31,10 @@ export function LoginForm({
     handleSubmit,
     watch,
     formState: { errors },
+    setError,
   } = useForm<Inputs>();
+
+  const [loginError, setLoginError] = useState<string>("");
 
   return (
     <div className={cn("flex flex-col gap-6 w-2/4", className)} {...props}>
@@ -41,11 +45,16 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={handleSubmit((data) => {
-              console.log(data);
+            onSubmit={handleSubmit(async (data) => {
+              setLoginError("");
 
               const formData = getFormData(data);
-              login(formData);
+              const res = await login(formData);
+
+              if (res.error) {
+                console.log(res.error);
+                setLoginError(res.error);
+              }
             })}
           >
             <div className="grid gap-3">
@@ -54,7 +63,21 @@ export function LoginForm({
               <div className="grid gap-6">
                 <div className="grid gap-3">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" {...register("email")} />
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register("email", {
+                      required: "This field is required",
+                      pattern: {
+                        value:
+                          /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+                        message: "Invalid email address",
+                      },
+                    })}
+                  />
+                  {errors.email && (
+                    <p className="text-red-700">{errors.email?.message}</p>
+                  )}
                 </div>
                 <div className="grid gap-3">
                   <div className="flex items-center">
@@ -71,6 +94,10 @@ export function LoginForm({
                     type="password"
                     {...register("password")}
                   />
+                </div>
+
+                <div>
+                  <span className="text-red-700 text-sm">{loginError}</span>
                 </div>
                 <Button type="submit" className="w-full">
                   Login
